@@ -4,14 +4,14 @@ CLI to generate wrappers that allow output errors to be transformed
 
 ## How to Use
 
-*Install ProxyWrapper*
+#### Install ProxyWrapper
 
 ```bash
 go get github.com/CannibalVox/errproxy/proxywrapper
 go install github.com/CannibalVox/errproxy/proxywrapper
 ```
 
-*Generate the wrappers of Your Choice*
+#### Generate the wrappers of Your Choice
 
 See the example/ folder for some examples!
 
@@ -19,7 +19,7 @@ See the example/ folder for some examples!
 proxywrapper -input database/sql -type DB -output ./dbwrapper
 ```
 
-*Create a wrapper, and use it in place of your target type!*
+#### Create a wrapper, and use it in place of your target type!
 
 ```golang
 func connectToDB(driver string, connString string) (*sqlwrapper.SqlDB, error) {
@@ -69,5 +69,5 @@ func connectToDB(driver string, connString string) (*sqlwrapper.SqlDB, error) {
 
 I have strong beliefs about how errors should be handled.  Unless you have some local-specific error handling behavior, they should return to the user surface by default, the error should have enough information on it to determine proper handling, and the user surface (HTTP, GRPC, UI, whatever) should provide that handling.  
 
-There's a lot of great options for attaching semantic data to errors- [palantir/stacktrace](https://github.com/palantir/stacktrace) provides ErrorCodes, GRPC status codes are great, and at past employers, I've created an error library that combined GRPC status codes and a user-facing string.  Regardless of how you choose to add semantic data to your errors, the biggest problem is going to be how to handle interfacing with libraries that don't follow your error handling doctrine.  Especially complicated libraries, such as database/sql and go-redis.  Auto-generating proxy wrappers is my idea of how to handle that, so here's the tool to do it.
+There's a lot of great options for attaching semantic data to errors- [palantir/stacktrace](https://github.com/palantir/stacktrace) provides ErrorCodes, GRPC status codes are great, and at a past employers, I created an error library that combined GRPC status codes and a user-facing string.  Regardless of how you choose to add semantic data to your errors, the biggest problem is going to be how to handle interfacing with libraries that don't follow your error handling doctrine.  Especially complicated libraries, such as database/sql and go-redis.  Auto-generating proxy wrappers is my idea of how to handle that, so here's the tool to do it.
 
