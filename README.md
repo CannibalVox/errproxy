@@ -44,7 +44,7 @@ func connectToDB(driver string, connString string) (*sqlwrapper.SqlDB, error) {
 	})
 
 	// Use the same interface as before!  The transformer is propagated to all objects
-    // returned from all methods
+	// returned from all methods
 	rows, err := dbWrap.Query("SELECT value FROM table LIMIT 20")
 	if err != nil {
 		return nil, err
