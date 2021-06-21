@@ -36,7 +36,8 @@ func connectToDB(driver string, connString string) (*sqlwrapper.SqlDB, error) {
 		if ok {
 			if pgErr.Code == "23505" {
 				return stacktrace.PropagateWithCode(err, 
-					stacktrace.ErrorCode(codes.AlreadyExists), "unique constraint violation")
+					stacktrace.ErrorCode(codes.AlreadyExists),
+					"unique constraint violation")
 			}
 		}
 		return err
