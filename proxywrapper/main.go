@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	gotypes "go/types"
 	"io/fs"
@@ -75,11 +74,7 @@ func loadType(inputPackage string, inputType string, allPackages []string) (goty
 	return locatedTypeDef.Type(), fullQualifiedPackages
 }
 
-var errUnexpectedDir = errors.New("unexpected directory")
-var errNonGoFile = errors.New("non-go file located")
-var errNonGeneratedFile = errors.New("non-generated go file located")
-
-func canDelete(generationPath string) (bool, error) {
+func deleteGeneratedFiles(generationPath string) error {
 	err := filepath.WalkDir(generationPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -90,11 +85,11 @@ func canDelete(generationPath string) (bool, error) {
 		}
 
 		if d.IsDir() {
-			return errUnexpectedDir
+			return nil
 		}
 
 		if filepath.Ext(path) != ".go" {
-			return errNonGoFile
+			return nil
 		}
 
 		text, err := ioutil.ReadFile(path)
@@ -103,22 +98,15 @@ func canDelete(generationPath string) (bool, error) {
 		}
 
 		if !strings.HasPrefix(string(text), "// ErrProxy Generated File, DO NOT EDIT") {
-			return errNonGeneratedFile
+			return nil
 		}
+
+		os.Remove(path)
 
 		return nil
 	})
 
-	if err == errUnexpectedDir || err == errNonGoFile || err == errNonGeneratedFile {
-		log.Println(err)
-		return false, nil
-	}
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return err
 }
 
 func main() {
@@ -156,6 +144,10 @@ func main() {
 	typeDB := walker.WalkTypes()
 
 	_, err = os.Stat(outputPath)
+	if err != nil && !os.IsNotExist(err) {
+		log.Fatalln(err)
+	}
+
 	if !os.IsNotExist(err) {
 		if err != nil {
 			log.Fatalln(err)
@@ -163,24 +155,15 @@ func main() {
 
 		// The folder already exists, so we should check if all files within are ErrProxy-generated go files
 		// If not, error out.  If so, delete the folder
-		willDelete, err := canDelete(outputPath)
+		err := deleteGeneratedFiles(outputPath)
 		if err != nil {
 			log.Fatalln(err)
 		}
-
-		if !willDelete {
-			log.Fatalf("'%s' cannot be regenerated because it contains non-generated files\n", outputPath)
-		}
-
-		err = os.RemoveAll(outputPath)
+	} else {
+		err = os.MkdirAll(outputPath, 0755)
 		if err != nil {
 			log.Fatalln(err)
 		}
-	}
-
-	err = os.MkdirAll(outputPath, 0755)
-	if err != nil {
-		log.Fatalln(err)
 	}
 
 	// If no -pkg flag was passed in, just break off the last folder in the path as the package name
@@ -215,10 +198,11 @@ func main() {
 
 	//Output generated files
 	for _, fileGen := range fileGens {
-		log.Println("Printing ", fileGen)
 		err := fileGen.WriteFile(outputPath)
 		if err != nil {
 			log.Fatalln(err)
 		}
 	}
+
+	log.Printf("Successfully generated wrapper in %s", outputPath)
 }

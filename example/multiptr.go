@@ -1,4 +1,4 @@
-package multiptr
+package example
 
 type Struct struct{}
 

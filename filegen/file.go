@@ -3,7 +3,6 @@ package filegen
 import (
 	"fmt"
 	gotypes "go/types"
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -126,7 +125,6 @@ func (f *FileCreate) AppendType(t *types.TypeInfo) {
 	f.jen.Line()
 
 	// Wrap all exported methods
-	log.Println(gotypes.TypeString(t.TypeId.Type, nil))
 	for _, methodInfo := range t.MethodToWrap {
 		f.wrapMethod(t, methodInfo)
 	}
