@@ -93,6 +93,7 @@ type RootTypeInfo struct {
 	// The value is the type key for the owning type- this is necessary because
 	// we may assign a method to one type initially but allow another method to steal
 	// it later
+	HasDirectReceiver bool // If true, there is a method with a direct non-pointer receiver
 }
 
 func (r *RootTypeInfo) CanUseMethod(t gotypes.Type, method string) bool {

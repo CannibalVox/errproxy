@@ -43,6 +43,11 @@ func (state *TypeWalker) walkSingleType(walkType *TypeInfo) {
 		return
 	}
 
+	// If this is a direct, non-pointered type (root type == type), then that will change how we render the wrapper
+	if walkType.TypeId.TypeKey == walkType.RootType.RootType.TypeKey {
+		walkType.RootType.HasDirectReceiver = true
+	}
+
 	// Loop through each method
 	for _, wrappedMethod := range walkType.MethodToWrap {
 		sig := wrappedMethod.Type().(*gotypes.Signature)

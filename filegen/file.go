@@ -38,7 +38,11 @@ func NewFile(pkgName string, t *types.TypeInfo, db *types.TypeDB) *FileCreate {
 	//   inner [ElementType]
 	//	 errorTransformer ErrorTransformer
 	// }
-	innerField := jenutils.Type(jen.Id("Inner"), t.TypeId.Type)
+	innerType := t.TypeId.Type
+	if !t.RootType.HasDirectReceiver {
+		innerType = gotypes.NewPointer(innerType)
+	}
+	innerField := jenutils.Type(jen.Id("Inner"), innerType)
 	errTransformerField := jen.Id("ErrorTransformer").Qual("github.com/CannibalVox/errproxy", "ErrorTransformer")
 
 	fileCreate.jen.Type().Id(t.RootType.RootType.WrapperTypeName()).Struct(innerField, errTransformerField)
@@ -100,7 +104,7 @@ func (f *FileCreate) AppendType(t *types.TypeInfo) {
 
 	funcDeclaration.BlockFunc(func(g *jen.Group) {
 		// if inner == nil { return nil }
-		if t.TypeId.PointerDepth > 0 {
+		if t.TypeId.PointerDepth > 0 || t.TypeId.Mode == types.TypeInterface {
 			//If this is a pointer type, we'll need to dereference it soon so check if we can
 			g.If(jen.Id("inner").Op("==").Nil()).Block(jen.Return(jen.Nil()))
 			g.Line()
@@ -108,7 +112,7 @@ func (f *FileCreate) AppendType(t *types.TypeInfo) {
 
 		// If we're accepting a pointer, we need to dereference it before assigning the struct field
 		innerAssign := jen.Null()
-		if t.TypeId.PointerDepth > 0 {
+		if t.TypeId.PointerDepth > 0 && t.RootType.HasDirectReceiver {
 			innerAssign = jen.Op("*")
 		}
 
@@ -217,7 +221,7 @@ func (f *FileCreate) wrapMethod(t *types.TypeInfo, methodInfo *gotypes.Selection
 
 				var paramCodes *jen.Statement
 				doWrap, paramTypeInfo := f.requiresWrap(param.Type(), types.WrapStatusHard)
-				if doWrap && paramTypeInfo.TypeId.PointerDepth > 0 {
+				if doWrap && paramTypeInfo.TypeId.PointerDepth > 0 && paramTypeInfo.RootType.HasDirectReceiver {
 					paramCodes = g.Op("&").Id(paramVal).Dot("Inner")
 				} else if doWrap {
 					paramCodes = g.Id(paramVal).Dot("Inner")
