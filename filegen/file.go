@@ -38,8 +38,8 @@ func NewFile(pkgName string, t *types.TypeInfo, db *types.TypeDB) *FileCreate {
 	//   inner [ElementType]
 	//	 errorTransformer ErrorTransformer
 	// }
-	innerField := jenutils.Type(jen.Id("inner"), t.TypeId.Type)
-	errTransformerField := jen.Id("errorTransformer").Qual("github.com/CannibalVox/errproxy", "ErrorTransformer")
+	innerField := jenutils.Type(jen.Id("Inner"), t.TypeId.Type)
+	errTransformerField := jen.Id("ErrorTransformer").Qual("github.com/CannibalVox/errproxy", "ErrorTransformer")
 
 	fileCreate.jen.Type().Id(t.RootType.RootType.WrapperTypeName()).Struct(innerField, errTransformerField)
 
@@ -124,8 +124,8 @@ func (f *FileCreate) AppendType(t *types.TypeInfo) {
 		// }
 		g.Return(structAssign.Id(t.TypeId.WrapperTypeName()).Values(
 			jen.DictFunc(func(d jen.Dict) {
-				d[jen.Id("inner")] = innerAssign.Id("inner")
-				d[jen.Id("errorTransformer")] = jen.Id("errorTransformer")
+				d[jen.Id("Inner")] = innerAssign.Id("inner")
+				d[jen.Id("ErrorTransformer")] = jen.Id("errorTransformer")
 			}),
 		))
 	})
@@ -209,7 +209,7 @@ func (f *FileCreate) wrapMethod(t *types.TypeInfo, methodInfo *gotypes.Selection
 			callLine.Op(":=")
 		}
 
-		callLine.Id(receiverName).Dot("inner").Dot(methodInfo.Obj().Name()).CallFunc(func(g *jen.Group) {
+		callLine.Id(receiverName).Dot("Inner").Dot(methodInfo.Obj().Name()).CallFunc(func(g *jen.Group) {
 			for i := 0; i < sig.Params().Len(); i++ {
 				param := sig.Params().At(i)
 
@@ -218,9 +218,9 @@ func (f *FileCreate) wrapMethod(t *types.TypeInfo, methodInfo *gotypes.Selection
 				var paramCodes *jen.Statement
 				doWrap, paramTypeInfo := f.requiresWrap(param.Type(), types.WrapStatusHard)
 				if doWrap && paramTypeInfo.TypeId.PointerDepth > 0 {
-					paramCodes = g.Op("&").Id(paramVal).Dot("inner")
+					paramCodes = g.Op("&").Id(paramVal).Dot("Inner")
 				} else if doWrap {
-					paramCodes = g.Id(paramVal).Dot("inner")
+					paramCodes = g.Id(paramVal).Dot("Inner")
 				} else {
 					paramCodes = g.Id(paramVal)
 				}
@@ -243,9 +243,9 @@ func (f *FileCreate) wrapMethod(t *types.TypeInfo, methodInfo *gotypes.Selection
 					// If wrappable type, return WrapSomeType(r0)
 					// otherwise just return r0
 					if types.IsError(result.Type()) {
-						g.Id(receiverName).Dot("errorTransformer").Call(retVar)
+						g.Id(receiverName).Dot("ErrorTransformer").Call(retVar)
 					} else if doWrap {
-						g.Id(typeInfo.TypeId.WrapFuncName()).Call(retVar, jen.Id(receiverName).Dot("errorTransformer"))
+						g.Id(typeInfo.TypeId.WrapFuncName()).Call(retVar, jen.Id(receiverName).Dot("ErrorTransformer"))
 					} else {
 						g.Add(retVar)
 					}
