@@ -11,6 +11,14 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
+func paramName(param *gotypes.Var, paramIndex int) string {
+	if param.Name() == "" || param.Name() == "_" {
+		return fmt.Sprintf("p%d", paramIndex)
+	}
+
+	return param.Name()
+}
+
 type FileCreate struct {
 	jen      *jen.File
 	typeDB   *types.TypeDB
@@ -150,13 +158,7 @@ func (f *FileCreate) wrapMethod(t *types.TypeInfo, methodInfo *gotypes.Selection
 	for i := 0; i < sig.Params().Len(); i++ {
 		param := sig.Params().At(i)
 
-		var paramName *jen.Statement
-		if param.Name() == "" {
-			paramName = jen.Id(fmt.Sprintf("p%d", i))
-		} else {
-			paramName = jen.Id(param.Name())
-		}
-
+		paramName := jen.Id(paramName(param, i))
 		if sig.Variadic() && i == sig.Params().Len()-1 {
 			paramSlice := param.Type().(*gotypes.Slice)
 			params = append(params, f.addWrappedType(paramName.Op("..."), paramSlice.Elem()))
@@ -211,12 +213,7 @@ func (f *FileCreate) wrapMethod(t *types.TypeInfo, methodInfo *gotypes.Selection
 			for i := 0; i < sig.Params().Len(); i++ {
 				param := sig.Params().At(i)
 
-				var paramVal string
-				if param.Name() == "" {
-					paramVal = fmt.Sprintf("p%d", i)
-				} else {
-					paramVal = param.Name()
-				}
+				paramVal := paramName(param, i)
 
 				var paramCodes *jen.Statement
 				doWrap, paramTypeInfo := f.requiresWrap(param.Type(), types.WrapStatusHard)
